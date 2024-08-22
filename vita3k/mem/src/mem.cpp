@@ -41,7 +41,7 @@
 #endif
 
 constexpr uint32_t STANDARD_PAGE_SIZE = KiB(4);
-size_t TOTAL_MEM_SIZE = GiB(4);
+uint64_t TOTAL_MEM_SIZE = GiB(4);
 constexpr bool LOG_PROTECT = false;
 constexpr bool PAGE_NAME_TRACKING = false;
 
@@ -74,7 +74,7 @@ bool init(MemState &state, const bool use_page_table) {
 
     LOG_DEBUG("Default virtual Memory size: {} Bytes", TOTAL_MEM_SIZE);
     LOG_DEBUG("Default page size: {} Bytes", STANDARD_PAGE_SIZE);
-    size_t mem_size_tmp = SDL_GetSystemRAM();
+    uint64_t mem_size_tmp = SDL_GetSystemRAM() * 1000000;
     if(mem_size_tmp < TOTAL_MEM_SIZE){
        LOG_DEBUG("Virtual Memory size too low!, using default value!");
     }else{
