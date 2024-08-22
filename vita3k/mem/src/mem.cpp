@@ -41,7 +41,7 @@
 #endif
 
 constexpr uint32_t STANDARD_PAGE_SIZE = KiB(4);
-uint64_t TOTAL_MEM_SIZE = GiB(4);
+size_t TOTAL_MEM_SIZE = GiB(4);
 constexpr bool LOG_PROTECT = false;
 constexpr bool PAGE_NAME_TRACKING = false;
 
@@ -74,16 +74,16 @@ bool init(MemState &state, const bool use_page_table) {
 
 //    LOG_DEBUG("Default virtual Memory size: {} Bytes", TOTAL_MEM_SIZE);
 //    LOG_DEBUG("Default page size: {} Bytes", STANDARD_PAGE_SIZE);
-    uint64_t mem_size_tmp = SDL_GetSystemRAM();
-    mem_size_tmp = static_cast<uint64_t>(mem_size_tmp / 3) * 1000000;
-//    LOG_DEBUG("Custom memory size set: {} Bytes", mem_size_tmp);
+    size_t mem_size_tmp = SDL_GetSystemRAM();
+    mem_size_tmp = (mem_size_tmp - (mem_size_tmp / 4)) * 1000000;
+    LOG_DEBUG("Custom memory size set: {} Bytes", mem_size_tmp);
     if(mem_size_tmp < TOTAL_MEM_SIZE){
        LOG_DEBUG("Virtual Memory size too low!, using default value!");
     }else{
        TOTAL_MEM_SIZE = mem_size_tmp;
     }
     LOG_DEBUG("Virtual Memory size set: {} Bytes", TOTAL_MEM_SIZE);
-    LOG_DEBUG("Page size: {} Bytes", state.page_size);
+//    LOG_DEBUG("Page size: {} Bytes", state.page_size);
     assert(state.page_size >= 4096); // Limit imposed by Unicorn.
     assert(!use_page_table || state.page_size == STANDARD_PAGE_SIZE);
 
@@ -501,15 +501,16 @@ void free(MemState &state, Address address) {
     }
 
     assert(!state.use_page_table || state.page_table[address / STANDARD_PAGE_SIZE] == state.memory.get());
-    uint8_t *const memory = &state.memory[static_cast<size_t>(page_num * state.page_size)];
+    uint8_t *const memory = &state.memory[static_cast<size_t>(page_num) * state.page_size];
 
 #ifdef WIN32
-    const BOOL ret = VirtualFree(memory, static_cast<size_t>(page.size * state.page_size), MEM_DECOMMIT);
+    const BOOL ret = VirtualFree(memory, static_cast<size_t>(page.size) * state.page_size, MEM_DECOMMIT);
     LOG_CRITICAL_IF(!ret, "VirtualFree failed: {}", get_error_msg());
 #else
-    int ret = mprotect(memory, static_cast<size_t>(page.size * state.page_size), PROT_NONE);
+    size_t pagesize = static_cast<size_t>(page.size) * state.page_size;
+    int ret = mprotect(memory, pagesize, PROT_NONE);
     LOG_CRITICAL_IF(ret == -1, "mprotect failed: {}", get_error_msg());
-    ret = madvise(memory, static_cast<size_t>(page.size * state.page_size), MADV_DONTNEED);
+    ret = madvise(memory, pagesize, MADV_DONTNEED);
     LOG_CRITICAL_IF(ret == -1, "madvise failed: {}", get_error_msg());
 #endif
 }
