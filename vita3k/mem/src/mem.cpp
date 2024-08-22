@@ -29,6 +29,8 @@
 #include <cstring>
 #include <utility>
 
+#include <SDL.h>
+
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -39,7 +41,7 @@
 #endif
 
 constexpr uint32_t STANDARD_PAGE_SIZE = KiB(4);
-constexpr size_t TOTAL_MEM_SIZE = GiB(2);
+constexpr size_t TOTAL_MEM_SIZE = SDL_GetSystemRAM();
 constexpr bool LOG_PROTECT = false;
 constexpr bool PAGE_NAME_TRACKING = false;
 
