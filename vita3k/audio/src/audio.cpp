@@ -137,7 +137,7 @@ AudioOutPortPtr AudioState::open_port(int nb_channels, int freq, int nb_sample) 
 
         AudioOutPortPtr port = std::make_shared<AudioOutPort>();
         port->len_microseconds = (nb_sample * 1'000'000ULL) / freq;
-        port->len_bytes = static_cast<uint32_t>(nb_sample * nb_channels) * sizeof(uint16_t);
+        port->len_bytes = static_cast<int>(nb_sample) * nb_channels * sizeof(uint16_t);
         port->stream = stream;
 
         return port;
@@ -184,7 +184,8 @@ void AudioState::audio_output(ThreadState &thread, AudioOutPort &out_port, const
         // This is because the PS Vita and the host audio parameters do not match exactly
         // So instead only wait 50% of the time
         // also don't sleep for less than 0.5 ms
-        to_wait /= 2;
+        // to_wait /= 2;
+        to_wait /= 3;
         std::this_thread::sleep_for(std::chrono::microseconds(to_wait));
         out_port.last_output = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     } else {
