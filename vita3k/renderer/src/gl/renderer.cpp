@@ -456,10 +456,10 @@ static std::map<SceGxmColorFormat, std::pair<GLenum, GLenum>> GXM_COLOR_FORMAT_T
 static bool format_need_temp_storage(const GLState &state, SceGxmColorSurface &surface, std::vector<std::uint8_t> &storage, const std::uint32_t width, const std::uint32_t height) {
     size_t needed_pixels;
     if (state.res_multiplier == 1.0f) {
-        needed_pixels = surface.strideInPixels * height;
+        needed_pixels = static_cast<uint32_t>(surface.strideInPixels) * height;
     } else {
         // width and height is already upscaled
-        needed_pixels = width * height;
+        needed_pixels = static_cast<uint32_t>(width) * height;
     }
 
     if ((surface.colorFormat == SCE_GXM_COLOR_FORMAT_SE5M9M9M9_BGR) || (surface.colorFormat == SCE_GXM_COLOR_FORMAT_SE5M9M9M9_RGB)) {
