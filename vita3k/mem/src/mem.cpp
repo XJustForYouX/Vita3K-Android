@@ -72,14 +72,15 @@ bool init(MemState &state, const bool use_page_table) {
 #endif
     state.page_size = std::max(STANDARD_PAGE_SIZE, state.page_size);
 
-    LOG_DEBUG("Default virtual Memory size: {} KB", TOTAL_MEM_SIZE);
-    size_t mem_size_tmp = KiB(SDL_GetSystemRAM()) - GiB(1);
+    LOG_DEBUG("Default virtual Memory size: {} Bytes", TOTAL_MEM_SIZE);
+    LOG_DEBUG("Default page size: {} Bytes", STANDARD_PAGE_SIZE);
+    size_t mem_size_tmp = (KiB(1)*(SDL_GetSystemRAM())) - GiB(1);
     if(mem_size_tmp < TOTAL_MEM_SIZE){
        LOG_DEBUG("Virtual Memory size too low!, using default value!");
     }else{
        TOTAL_MEM_SIZE = mem_size_tmp;
     }
-    LOG_DEBUG("Virtual Memory size set: {} KB", TOTAL_MEM_SIZE);
+    LOG_DEBUG("Virtual Memory size set: {} Bytes", TOTAL_MEM_SIZE);
     LOG_DEBUG("Page size: {} Bytes", state.page_size);
     assert(state.page_size >= 4096); // Limit imposed by Unicorn.
     assert(!use_page_table || state.page_size == STANDARD_PAGE_SIZE);
