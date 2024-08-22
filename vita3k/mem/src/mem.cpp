@@ -41,7 +41,7 @@
 #endif
 
 constexpr uint32_t STANDARD_PAGE_SIZE = KiB(4);
-size_t TOTAL_MEM_SIZE = SDL_GetSystemRAM();
+size_t TOTAL_MEM_SIZE = MiB(SDL_GetSystemRAM());
 constexpr bool LOG_PROTECT = false;
 constexpr bool PAGE_NAME_TRACKING = false;
 
@@ -72,7 +72,8 @@ bool init(MemState &state, const bool use_page_table) {
 #endif
     state.page_size = std::max(STANDARD_PAGE_SIZE, state.page_size);
 
-    LOG_DEBUG("Memory, set Page size: {} bytes", state.page_size);
+    LOG_DEBUG("Total Memory Size: {} MB", TOTAL_MEM_SIZE);
+    LOG_DEBUG("Page size: {} bytes", state.page_size);
     assert(state.page_size >= 4096); // Limit imposed by Unicorn.
     assert(!use_page_table || state.page_size == KiB(4));
 
