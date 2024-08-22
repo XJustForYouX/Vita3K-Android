@@ -41,7 +41,9 @@
 #endif
 
 constexpr uint32_t STANDARD_PAGE_SIZE = KiB(4);
-size_t TOTAL_MEM_SIZE = MiB(SDL_GetSystemRAM());
+size_t TOTAL_MEM_SIZE = (KiB(SDL_GetSystemRAM() - GiB(1));
+if(TOTAL_MEM_SIZE < GiB(4)
+    TOTAL_MEM_SIZE = GiB(4);
 constexpr bool LOG_PROTECT = false;
 constexpr bool PAGE_NAME_TRACKING = false;
 
@@ -72,7 +74,7 @@ bool init(MemState &state, const bool use_page_table) {
 #endif
     state.page_size = std::max(STANDARD_PAGE_SIZE, state.page_size);
 
-    LOG_DEBUG("Total Memory Size: {} MB", TOTAL_MEM_SIZE);
+   // LOG_DEBUG("Total Memory Size: {} KiB", TOTAL_MEM_SIZE);
     LOG_DEBUG("Page size: {} bytes", state.page_size);
     assert(state.page_size >= 4096); // Limit imposed by Unicorn.
     assert(!use_page_table || state.page_size == KiB(4));
@@ -291,7 +293,7 @@ bool handle_access_violation(MemState &state, uint8_t *addr, bool write) noexcep
         // HACK: keep going
         unprotect_inner(state, align_down(vaddr, state.page_size), state.page_size);
         LOG_CRITICAL("Unhandled write protected region was valid. Address=0x{:X}", vaddr);
-    //    return true;
+        return true;
     }
 
     ProtectSegmentInfo &info = it->second;
@@ -299,7 +301,7 @@ bool handle_access_violation(MemState &state, uint8_t *addr, bool write) noexcep
         // HACK: keep going
         unprotect_inner(state, align_down(vaddr, state.page_size), state.page_size);
         LOG_CRITICAL("Unhandled write protected region was valid. Address=0x{:X}", vaddr);
-     //   return true;
+        return true;
     }
 
     Address previous_beg = it->first;
