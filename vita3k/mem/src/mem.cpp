@@ -73,7 +73,7 @@ bool init(MemState &state, const bool use_page_table) {
     state.page_size = std::max(STANDARD_PAGE_SIZE, state.page_size);
 
     LOG_DEBUG("Default virtual Memory size: {} KB", TOTAL_MEM_SIZE);
-    size_t mem_size_tmp = KiB(SDL_GetSystemRAM()) - GiB(1));
+    size_t mem_size_tmp = KiB(SDL_GetSystemRAM()) - GiB(1);
     if(mem_size_tmp < TOTAL_MEM_SIZE){
        LOG_DEBUG("Virtual Memory size too low!, using default value!");
     }else{
