@@ -41,7 +41,7 @@
 #endif
 
 constexpr uint32_t STANDARD_PAGE_SIZE = KiB(4);
-constexpr size_t TOTAL_MEM_SIZE = SDL_GetSystemRAM();
+size_t TOTAL_MEM_SIZE = SDL_GetSystemRAM();
 constexpr bool LOG_PROTECT = false;
 constexpr bool PAGE_NAME_TRACKING = false;
 
