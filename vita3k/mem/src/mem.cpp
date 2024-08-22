@@ -74,7 +74,7 @@ bool init(MemState &state, const bool use_page_table) {
 
     LOG_DEBUG("Default virtual Memory size: {} Bytes", TOTAL_MEM_SIZE);
     LOG_DEBUG("Default page size: {} Bytes", STANDARD_PAGE_SIZE);
-    size_t mem_size_tmp = (KiB(1)*(SDL_GetSystemRAM())) - GiB(1);
+    size_t mem_size_tmp = (SDL_GetSystemRAM() * 100000) - GiB(1);
     if(mem_size_tmp < TOTAL_MEM_SIZE){
        LOG_DEBUG("Virtual Memory size too low!, using default value!");
     }else{
