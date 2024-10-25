@@ -18,11 +18,6 @@
 #ifdef ANDROID
 // must be first
 #define __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__
-// memory mapping?
-#define VK_USE_PLATFORM_ANDROID_KHR
-
-#include <emuenv/state.h>
-#include <SDL_messagebox.h>
 #endif
 
 #include <renderer/functions.h>
@@ -46,6 +41,7 @@
 #endif
 
 #ifdef ANDROID
+#include <emuenv/state.h>
 #include <SDL.h>
 #include <adrenotools/bcenabler.h>
 #include <adrenotools/driver.h>
@@ -1168,9 +1164,10 @@ bool VKState::map_memory(MemState &mem, Ptr<void> address, uint32_t size) {
             vk::BufferCreateInfo{
                 .size = size + KiB(4),
                 .usage = mapped_memory_flags,
-                .sharingMode = vk::SharingMode::eExclusive },
+                .sharingMode = vk::SharingMode::eExclusive | vk::SharingMode::eConcurrent },
             vk::ExternalMemoryBufferCreateInfoKHR{
-                .handleTypes = support_android_buffer_import ? vk::ExternalMemoryHandleTypeFlagBits::eAndroidHardwareBufferANDROID : vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd }
+        //        .handleTypes = support_android_buffer_import ? vk::ExternalMemoryHandleTypeFlagBits::eAndroidHardwareBufferANDROID : vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd }
+                .handleTypes = support_android_buffer_import ? vk::ExternalMemoryHandleTypeFlagBits::eAndroidHardwareBufferANDROID : vk::ExternalMemoryHandleTypeFlagBits::eHostMappedForeignMemoryEXT }
         };
         const vk::Buffer mapped_buffer = device.createBuffer(buffer_info.get());
         device.bindBufferMemory(mapped_buffer, device_memory, 0);
