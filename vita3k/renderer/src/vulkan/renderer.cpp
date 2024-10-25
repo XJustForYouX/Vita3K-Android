@@ -1102,11 +1102,12 @@ bool VKState::map_memory(MemState &mem, Ptr<void> address, uint32_t size) {
 	    
         // if we get there, this means we support the hardware buffer extension
         AHardwareBuffer_Desc buffer_desc{
-            .width = static_cast<uint32_t>(size + KiB(4)),
+	    .width = size,
+       //     .width = static_cast<uint32_t>(size + KiB(4)),
             .height = 1,
             .layers = 1,
             .format = AHARDWAREBUFFER_FORMAT_BLOB,
-            .usage = AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER | AHARDWAREBUFFER_USAGE_GPU_FRAMEBUFFER | AHARDWAREBUFFER_USAGE_CPU_READ_MASK | AHARDWAREBUFFER_USAGE_CPU_WRITE_MASK | AHARDWAREBUFFER_USAGE_VIDEO_ENCODE,
+            .usage = AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER | AHARDWAREBUFFER_USAGE_CPU_READ_MASK | AHARDWAREBUFFER_USAGE_CPU_WRITE_MASK,
         };
         AHardwareBuffer *buffer;
         int err = _AHardwareBuffer_allocate(&buffer_desc, &buffer);
@@ -1166,8 +1167,8 @@ bool VKState::map_memory(MemState &mem, Ptr<void> address, uint32_t size) {
                 .usage = mapped_memory_flags,
                 .sharingMode = vk::SharingMode::eExclusive },
             vk::ExternalMemoryBufferCreateInfoKHR{
-        //        .handleTypes = support_android_buffer_import ? vk::ExternalMemoryHandleTypeFlagBits::eAndroidHardwareBufferANDROID : vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd }
-                .handleTypes = support_android_buffer_import ? vk::ExternalMemoryHandleTypeFlagBits::eAndroidHardwareBufferANDROID : vk::ExternalMemoryHandleTypeFlagBits::eHostMappedForeignMemoryEXT }
+                .handleTypes = support_android_buffer_import ? vk::ExternalMemoryHandleTypeFlagBits::eAndroidHardwareBufferANDROID : vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd }
+        //        .handleTypes = support_android_buffer_import ? vk::ExternalMemoryHandleTypeFlagBits::eAndroidHardwareBufferANDROID : vk::ExternalMemoryHandleTypeFlagBits::eHostMappedForeignMemoryEXT }
         };
         const vk::Buffer mapped_buffer = device.createBuffer(buffer_info.get());
         device.bindBufferMemory(mapped_buffer, device_memory, 0);
