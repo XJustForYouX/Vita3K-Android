@@ -1164,7 +1164,7 @@ bool VKState::map_memory(MemState &mem, Ptr<void> address, uint32_t size) {
             vk::BufferCreateInfo{
                 .size = size + KiB(4),
                 .usage = mapped_memory_flags,
-                .sharingMode = vk::SharingMode::eExclusive | vk::SharingMode::eConcurrent },
+                .sharingMode = vk::SharingMode::eExclusive },
             vk::ExternalMemoryBufferCreateInfoKHR{
         //        .handleTypes = support_android_buffer_import ? vk::ExternalMemoryHandleTypeFlagBits::eAndroidHardwareBufferANDROID : vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd }
                 .handleTypes = support_android_buffer_import ? vk::ExternalMemoryHandleTypeFlagBits::eAndroidHardwareBufferANDROID : vk::ExternalMemoryHandleTypeFlagBits::eHostMappedForeignMemoryEXT }
