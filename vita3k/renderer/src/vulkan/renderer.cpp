@@ -1083,35 +1083,33 @@ bool VKState::map_memory(MemState &mem, Ptr<void> address, uint32_t size) {
         // first try to find a memory that is both coherent and cached
         int mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostCached, hardware_types);
 
-	if (mapped_memory_type == -1){
-            // then only coherent (lower performance)
-            mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eHostCached, hardware_types);
-            LOG_TRACE("Try recall mapped_memory_type : eHostCached");
-	}
-	    
         if (mapped_memory_type == -1){
             // then only coherent (lower performance)
             mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eHostCoherent, hardware_types);
-            LOG_TRACE("Try recall mapped_memory_type : eHostCoherent");
+            LOG_TRACE("Call mapped_memory_type : eHostCoherent");
 	}
 	
 	if (mapped_memory_type == -1){
             mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eDeviceLocal, hardware_types);
-           LOG_TRACE("Try recall mapped_memory_type : eDeviceLocal");
+           LOG_TRACE("Call mapped_memory_type : eDeviceLocal");
 	}
 
 	if (mapped_memory_type == -1){
             mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eHostVisible, hardware_types);
-           LOG_TRACE("Try recall mapped_memory_type : eHostVisible");
+           LOG_TRACE("Call mapped_memory_type : eHostVisible");
 	}
 
 	if (mapped_memory_type == -1){
             mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eLazilyAllocated, hardware_types);
-           LOG_TRACE("Try recall mapped_memory_type : eLazilyAllocated");
+           LOG_TRACE("Call mapped_memory_type : eLazilyAllocated");
 	}
 
-        LOG_TRACE("mapped_memory_type ID first try : {}", mapped_memory_type);
-        
+	if (mapped_memory_type == -1){
+            // then only coherent (lower performance)
+            mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eHostCached, hardware_types);
+            LOG_TRACE("Call mapped_memory_type : eHostCached");
+	}
+	    
 	if (mapped_memory_type == -1) {
             static bool has_happened = false;
             LOG_CRITICAL_IF(!has_happened, "No coherent memory available for memory mapping!");
@@ -1119,8 +1117,7 @@ bool VKState::map_memory(MemState &mem, Ptr<void> address, uint32_t size) {
             mapped_memory_type = std::countr_zero(hardware_types);
 	}
 	    
-	LOG_TRACE("mapped_memory_type ID last: {}", mapped_memory_type);
-        return static_cast<uint32_t>(mapped_memory_type);
+	return static_cast<uint32_t>(mapped_memory_type);
     };
 
     switch (mapping_method) {
@@ -1129,7 +1126,8 @@ bool VKState::map_memory(MemState &mem, Ptr<void> address, uint32_t size) {
 	    
         // if we get there, this means we support the hardware buffer extension
         AHardwareBuffer_Desc buffer_desc{
-            .width = static_cast<uint32_t>(size + KiB(4)),
+        //    .width = static_cast<uint32_t>(size + KiB(4)),
+	    .width = size,
             .height = 1,
             .layers = 1,
             .format = AHARDWAREBUFFER_FORMAT_BLOB,
@@ -1215,10 +1213,11 @@ bool VKState::map_memory(MemState &mem, Ptr<void> address, uint32_t size) {
         // also make sure later the mapped address is 4K aligned
         vkutil::Buffer buffer(size + KiB(4));
         constexpr vma::AllocationCreateInfo memory_mapped_alloc = {
-            .flags = vma::AllocationCreateFlagBits::eMapped | vma::AllocationCreateFlagBits::eHostAccessSequentialWrite,
-  //          .usage = vma::MemoryUsage::eAutoPreferHost,
+            .flags = vma::AllocationCreateFlagBits::eMapped,
+	  //  .flags = vma::AllocationCreateFlagBits::eMapped | vma::AllocationCreateFlagBits::eHostAccessSequentialWrite,
+          //  .usage = vma::MemoryUsage::eAutoPreferHost,
 	    .usage = vma::MemoryUsage::eAuto,
-            .requiredFlags = vk::MemoryPropertyFlagBits::eLazilyAllocated | vk::MemoryPropertyFlagBits::eHostCoherent,
+            .requiredFlags = vk::MemoryPropertyFlagBits::eHostCoherent,
             .preferredFlags = vk::MemoryPropertyFlagBits::eHostCached,
         };
         buffer.init_buffer(mapped_memory_flags, memory_mapped_alloc);
