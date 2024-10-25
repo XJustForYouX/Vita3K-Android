@@ -18,6 +18,8 @@
 #ifdef ANDROID
 // must be first
 #define __ANDROID_UNAVAILABLE_SYMBOLS_ARE_WEAK__
+// memory mapping?
+#define VK_USE_PLATFORM_ANDROID_KHR
 
 #include <emuenv/state.h>
 #include <SDL_messagebox.h>
@@ -1101,13 +1103,14 @@ bool VKState::map_memory(MemState &mem, Ptr<void> address, uint32_t size) {
     switch (mapping_method) {
     case MappingMethod::NativeBuffer: {
 #ifdef ANDROID
+	    
         // if we get there, this means we support the hardware buffer extension
         AHardwareBuffer_Desc buffer_desc{
             .width = static_cast<uint32_t>(size + KiB(4)),
             .height = 1,
             .layers = 1,
             .format = AHARDWAREBUFFER_FORMAT_BLOB,
-            .usage = AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER | AHARDWAREBUFFER_USAGE_CPU_READ_MASK | AHARDWAREBUFFER_USAGE_CPU_WRITE_MASK,
+            .usage = AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER | AHARDWAREBUFFER_USAGE_GPU_FRAMEBUFFER | AHARDWAREBUFFER_USAGE_CPU_READ_MASK | AHARDWAREBUFFER_USAGE_CPU_WRITE_MASK | AHARDWAREBUFFER_USAGE_VIDEO_ENCODE,
         };
         AHardwareBuffer *buffer;
         int err = _AHardwareBuffer_allocate(&buffer_desc, &buffer);
@@ -1189,9 +1192,10 @@ bool VKState::map_memory(MemState &mem, Ptr<void> address, uint32_t size) {
         // also make sure later the mapped address is 4K aligned
         vkutil::Buffer buffer(size + KiB(4));
         constexpr vma::AllocationCreateInfo memory_mapped_alloc = {
-            .flags = vma::AllocationCreateFlagBits::eMapped | vma::AllocationCreateFlagBits::eHostAccessSequentialWrite,
-            .usage = vma::MemoryUsage::eAutoPreferHost,
-            .requiredFlags = vk::MemoryPropertyFlagBits::eHostCoherent,
+            .flags = vma::AllocationCreateFlagBits::eDedicatedMemory | vma::AllocationCreateFlagBits::eMapped | vma::AllocationCreateFlagBits::eHostAccessSequentialWrite | vma::AllocationCreateFlagBits::eHostAccessRandom,
+  //          .usage = vma::MemoryUsage::eAutoPreferHost,
+	    .usage = vma::MemoryUsage::eAuto,
+            .requiredFlags = vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eLazilyAllocated,
             .preferredFlags = vk::MemoryPropertyFlagBits::eHostCached,
         };
         buffer.init_buffer(mapped_memory_flags, memory_mapped_alloc);
