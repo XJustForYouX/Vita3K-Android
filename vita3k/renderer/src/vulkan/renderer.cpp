@@ -305,14 +305,6 @@ bool VKState::create(SDL_Window *window, std::unique_ptr<renderer::State> &state
         VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
         
 #ifdef ANDROID
-        /*  LOG_TRACE("LIBPASS ADRENO");
-	    LOG_TRACE("is_adreno : {}", adreno.is_adreno);
-	    LOG_TRACE("adreno_temp_dir: {}", adreno.adreno_temp_dir.c_str());
-	    LOG_TRACE("adreno_lib_dir: {}", adreno.adreno_lib_dir.c_str());
-	    LOG_TRACE("adreno_driver_path: {}", adreno.adreno_driver_path.c_str());
-	    LOG_TRACE("adreno_main_so_name: {}", adreno.adreno_main_so_name.c_str());
-	    LOG_TRACE("adreno_inject_dir: {}", adreno.adreno_inject_dir.c_str());
-	*/
         if(adreno.is_adreno){
     	    const char *temp_dir = nullptr;
         	if (SDL_GetAndroidSDKVersion() < 29) { // ANDROID 9
@@ -817,7 +809,7 @@ bool VKState::create(SDL_Window *window, std::unique_ptr<renderer::State> &state
     }
 
     // create the frame objects
-    for (int i = 0; i < MAX_FRAMES_RENDERING; i++) {
+    for (uint8_t i = 0; i < MAX_FRAMES_RENDERING; i++) {
         FrameObject &frame = frames[i];
 
         vk::CommandPoolCreateInfo pool_info{
@@ -1083,33 +1075,33 @@ bool VKState::map_memory(MemState &mem, Ptr<void> address, uint32_t size) {
         // first try to find a memory that is both coherent and cached
         int mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostCached, hardware_types);
 
+	if (mapped_memory_type == -1){
+            // then only coherent (lower performance)
+            mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eHostCached, hardware_types);
+          //  LOG_TRACE_ONCE("Call mapped_memory_type : eHostCached");
+	}
+	    
         if (mapped_memory_type == -1){
             // then only coherent (lower performance)
             mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eHostCoherent, hardware_types);
-            LOG_TRACE("Call mapped_memory_type : eHostCoherent");
+          //  LOG_TRACE_ONCE("Call mapped_memory_type : eHostCoherent");
 	}
 	
 	if (mapped_memory_type == -1){
             mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eDeviceLocal, hardware_types);
-           LOG_TRACE("Call mapped_memory_type : eDeviceLocal");
+          // LOG_TRACE_ONCE("Call mapped_memory_type : eDeviceLocal");
 	}
 
 	if (mapped_memory_type == -1){
             mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eHostVisible, hardware_types);
-           LOG_TRACE("Call mapped_memory_type : eHostVisible");
+          // LOG_TRACE_ONCE("Call mapped_memory_type : eHostVisible");
 	}
 
 	if (mapped_memory_type == -1){
             mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eLazilyAllocated, hardware_types);
-           LOG_TRACE("Call mapped_memory_type : eLazilyAllocated");
+          // LOG_TRACE_ONCE("Call mapped_memory_type : eLazilyAllocated");
 	}
 
-	if (mapped_memory_type == -1){
-            // then only coherent (lower performance)
-            mapped_memory_type = find_mem_type_with_flag(vk::MemoryPropertyFlagBits::eHostCached, hardware_types);
-            LOG_TRACE("Call mapped_memory_type : eHostCached");
-	}
-	    
 	if (mapped_memory_type == -1) {
             static bool has_happened = false;
             LOG_CRITICAL_IF(!has_happened, "No coherent memory available for memory mapping!");
@@ -1126,8 +1118,7 @@ bool VKState::map_memory(MemState &mem, Ptr<void> address, uint32_t size) {
 	    
         // if we get there, this means we support the hardware buffer extension
         AHardwareBuffer_Desc buffer_desc{
-        //    .width = static_cast<uint32_t>(size + KiB(4)),
-	    .width = size,
+            .width = static_cast<uint32_t>(size + KiB(4)),
             .height = 1,
             .layers = 1,
             .format = AHARDWAREBUFFER_FORMAT_BLOB,
@@ -1213,7 +1204,7 @@ bool VKState::map_memory(MemState &mem, Ptr<void> address, uint32_t size) {
         // also make sure later the mapped address is 4K aligned
         vkutil::Buffer buffer(size + KiB(4));
         constexpr vma::AllocationCreateInfo memory_mapped_alloc = {
-            .flags = vma::AllocationCreateFlagBits::eMapped,
+            .flags = vma::AllocationCreateFlagBits::eStrategyBestFit,
 	  //  .flags = vma::AllocationCreateFlagBits::eMapped | vma::AllocationCreateFlagBits::eHostAccessSequentialWrite,
           //  .usage = vma::MemoryUsage::eAutoPreferHost,
 	    .usage = vma::MemoryUsage::eAuto,
