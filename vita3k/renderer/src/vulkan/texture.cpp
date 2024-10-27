@@ -310,7 +310,7 @@ static vk::Format bcn_to_rgba8(const vk::Format format) {
         return vk::Format::eR8G8B8A8Unorm;
     case vk::Format::eBc1RgbaSrgbBlock:
         return vk::Format::eR8G8B8A8Srgb;
-    
+/*    
     // BC2
     case vk::Format::eBc2UnormBlock:
         return vk::Format::eR8G8B8A8Unorm;
@@ -322,7 +322,7 @@ static vk::Format bcn_to_rgba8(const vk::Format format) {
         return vk::Format::eR8G8B8A8Unorm;
     case vk::Format::eBc3SrgbBlock:
         return vk::Format::eR8G8B8A8Srgb;
-
+*/
     // BC4
     case vk::Format::eBc4UnormBlock:
         return vk::Format::eR8Unorm;
