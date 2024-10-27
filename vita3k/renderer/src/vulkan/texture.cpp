@@ -301,7 +301,7 @@ static vk::Format bcn_to_rgba8(const vk::Format format) {
     switch (format) {
     // https://www.reedbeta.com/blog/understanding-bcn-texture-compression-formats/
     
-    // BC1
+/*    // BC1
     case vk::Format::eBc1RgbUnormBlock:
         return vk::Format::eR8G8B8Unorm;
     case vk::Format::eBc1RgbSrgbBlock:
@@ -310,7 +310,7 @@ static vk::Format bcn_to_rgba8(const vk::Format format) {
         return vk::Format::eR8G8B8A8Unorm;
     case vk::Format::eBc1RgbaSrgbBlock:
         return vk::Format::eR8G8B8A8Snorm;
-    
+    */
     // BC2
     case vk::Format::eBc2UnormBlock:
         return vk::Format::eR8G8B8A8Unorm;
