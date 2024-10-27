@@ -291,7 +291,7 @@ static vk::Format linear_to_srgb(const vk::Format format) {
     case vk::Format::eBc7UnormBlock:
         return vk::Format::eBc7SrgbBlock;
     default: {
-        LOG_ERROR("Trying to use gamma correction with non-compatible format {}", vk::to_string(format));
+        LOG_WARN_ONCE("Trying to use gamma correction with non-compatible format {}", vk::to_string(format));
         return format;
     }
     }
@@ -299,58 +299,17 @@ static vk::Format linear_to_srgb(const vk::Format format) {
 
 static vk::Format bcn_to_rgba8(const vk::Format format) {
     switch (format) {
-    // https://www.reedbeta.com/blog/understanding-bcn-texture-compression-formats/
-    
-    // BC1
-    case vk::Format::eBc1RgbUnormBlock:
-        return vk::Format::eR8G8B8Unorm;
-    case vk::Format::eBc1RgbSrgbBlock:
-        return vk::Format::eR8G8B8Srgb;
-    case vk::Format::eBc1RgbaUnormBlock:
-        return vk::Format::eR8G8B8A8Unorm;
-    case vk::Format::eBc1RgbaSrgbBlock:
-        return vk::Format::eR8G8B8A8Srgb;
-/*    
-    // BC2
-    case vk::Format::eBc2UnormBlock:
-        return vk::Format::eR8G8B8A8Unorm;
-    case vk::Format::eBc2SrgbBlock:
-        return vk::Format::eR8G8B8A8Srgb;
-
-    // BC3
-    case vk::Format::eBc3UnormBlock:
-        return vk::Format::eR8G8B8A8Unorm;
-    case vk::Format::eBc3SrgbBlock:
-        return vk::Format::eR8G8B8A8Srgb;
-*/
-    // BC4
     case vk::Format::eBc4UnormBlock:
         return vk::Format::eR8Unorm;
     case vk::Format::eBc4SnormBlock:
         return vk::Format::eR8Snorm;
-
-    // BC5
     case vk::Format::eBc5UnormBlock:
         return vk::Format::eR8G8Unorm;
     case vk::Format::eBc5SnormBlock:
         return vk::Format::eR8G8Snorm;
-
-    // BC6
-    case vk::Format::eBc6HUfloatBlock:
-        return vk::Format::eR16G16Sfloat;
-    case vk::Format::eBc6HSfloatBlock:
-        return vk::Format::eR16G16B16Sfloat;
-
-    // BC7
-    case vk::Format::eBc7UnormBlock:
-        return vk::Format::eR16G16B16A16Unorm;
-    case vk::Format::eBc7SrgbBlock:
-        return vk::Format::eR16G16B16A16Unorm;
-
-    default:{
-        LOG_ERROR("Trying to convert bcn format with non-compatible format: {}", vk::to_string(format));
+    default:
+        // BC1/2/3
         return vk::Format::eR8G8B8A8Unorm;
-    }
     }
 }
 
@@ -400,7 +359,7 @@ void VKTextureCache::configure_texture(const SceGxmTexture &gxm_texture) {
         memory_needed += memory_needed / 2;
     if (is_cube)
         memory_needed *= 6;
-    current_texture->memory_needed = align(memory_needed, 16); 
+    current_texture->memory_needed = align(memory_needed, 16);
     vkutil::Image &image = current_texture->texture;
 
     // In case the cache is full, no need to put the previous image in the destroy queue
@@ -590,7 +549,7 @@ void VKTextureCache::configure_sampler(size_t index, const SceGxmTexture &textur
         .mipLodBias = (static_cast<float>(texture.lod_bias) - 31.f) / 8.f,
         .maxAnisotropy = static_cast<float>(anisotropic_filtering),
         .compareEnable = VK_FALSE,
-        .minLod = static_cast<float>(texture.lod_min0 | (texture.lod_min1 << 2)), // original was (texture.lod_min1 << 2)
+        .minLod = static_cast<float>(texture.lod_min0 | (texture.lod_min1 << 2)),
         .maxLod = VK_LOD_CLAMP_NONE,
         .unnormalizedCoordinates = VK_FALSE,
     };
@@ -627,9 +586,7 @@ void VKTextureCache::import_configure_impl(SceGxmTextureBaseFormat base_format, 
         state.frame().destroy_queue.add_image(image);
 
     vk::Format vk_format = texture::translate_format(base_format);
-    if (is_srgb && !support_dxt)
-        vk_format = bcn_to_rgba8(vk_format); // for mali users
-    else if (is_srgb)
+    if (is_srgb)
         vk_format = linear_to_srgb(vk_format);
 
     // manually initialize the image
