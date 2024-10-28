@@ -643,7 +643,7 @@ vk::PipelineVertexInputStateCreateInfo PipelineCache::get_vertex_input_state(con
                 break;
             case SCE_GXM_PARAMETER_TYPE_C10:
             {
-                LOG_WARNING("SCE_GXM_PARAMETER_TYPE_C10 STILL UNKNOWN!");
+                LOG_WARN_ONCE("SCE_GXM_PARAMETER_TYPE_C10 STILL UNKNOWN!");
                 attribute_format = SCE_GXM_ATTRIBUTE_FORMAT_U8;
                 break;
             }
@@ -662,7 +662,7 @@ vk::PipelineVertexInputStateCreateInfo PipelineCache::get_vertex_input_state(con
             default:
             {
                 // U32 format
-                LOG_WARNING("SCE_GXM_ATTRIBUTE_FORMAT_UNTYPED");
+                LOG_WARN_ONCE("SCE_GXM_ATTRIBUTE_FORMAT_UNTYPED");
                 attribute_format = SCE_GXM_ATTRIBUTE_FORMAT_UNTYPED;
                 break;
             }
