@@ -636,36 +636,19 @@ vk::PipelineVertexInputStateCreateInfo PipelineCache::get_vertex_input_state(con
             component_count = info.component_count;
             switch (info.gxm_type) {
             case SCE_GXM_PARAMETER_TYPE_U8:
-                attribute_format = SCE_GXM_ATTRIBUTE_FORMAT_U8;
-                break;
             case SCE_GXM_PARAMETER_TYPE_S8:
-                attribute_format = SCE_GXM_ATTRIBUTE_FORMAT_S8;
-                break;
             case SCE_GXM_PARAMETER_TYPE_C10:
-            {
-                LOG_WARN_ONCE("SCE_GXM_PARAMETER_TYPE_C10 STILL UNKNOWN!");
                 attribute_format = SCE_GXM_ATTRIBUTE_FORMAT_U8;
                 break;
-            }
             case SCE_GXM_PARAMETER_TYPE_U16:
+            case SCE_GXM_PARAMETER_TYPE_S16:
+            case SCE_GXM_PARAMETER_TYPE_F16:
                 attribute_format = SCE_GXM_ATTRIBUTE_FORMAT_U16;
                 break;
-            case SCE_GXM_PARAMETER_TYPE_S16:
-                attribute_format = SCE_GXM_ATTRIBUTE_FORMAT_S16;
-                break;
-            case SCE_GXM_PARAMETER_TYPE_F16:
-                attribute_format = SCE_GXM_ATTRIBUTE_FORMAT_F16;
-                break;
-            case SCE_GXM_PARAMETER_TYPE_F32:
-                attribute_format = SCE_GXM_ATTRIBUTE_FORMAT_F32;
-                break;
             default:
-            {
                 // U32 format
-                LOG_WARN_ONCE("SCE_GXM_ATTRIBUTE_FORMAT_UNTYPED");
                 attribute_format = SCE_GXM_ATTRIBUTE_FORMAT_UNTYPED;
                 break;
-            }
             }
 
             if (info.gxm_type == SCE_GXM_PARAMETER_TYPE_C10)
