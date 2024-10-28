@@ -2,17 +2,16 @@
 if you find issue go to main repo, not in here
 
 # Minimum system requirement
+- Vulkan 1.1 (All SoC) / OpenGLES 3.2 (Adreno only)
 - Android 9, 64 bit CPU for Snapdragon variant
-- Android 11, 64 bit CPU for Mediatek / Exynos / Rockchip (kirin not supported, idk why and since i dont have that phone variant there is no way to find out)
-- **PowerVR GPU NOT SUPPORTED** because it's have limited Vulkan feature (not yet find workaround since i dont have PowerVR phones)
+- Android 11, 64 bit CPU for Mediatek / Exynos / Rockchip (kirin still not supported?, idk why and since i dont have that phone variant there is no way to find out)
+- **PowerVR GPU NOT SUPPORTED** because it's have limited Vulkan feature (not yet find workaround since i don't have PowerVR phones)
 - At least 4GB of RAM
 - 6GB Free storage
 
 # Known Issue
-~- Custom driver didn't work in v12 build 2 or newer since it's **NOT** using custom SDL2 (because it's close source)~
-
-(Adreno GPU Driver supported now [v12_build10](https://github.com/ikhoeyZX/Vita3K-Android/releases/tag/v12_build10))
-- Vulkan 1.0 can run but it didn't run well, use OpenGL(ES) instead (adreno only, mali didn't support openGLES in this emu for now) 
+Adreno GPU Driver only supported v11.5 (old sdl2 version) and [v12_build10](https://github.com/ikhoeyZX/Vita3K-Android/releases/tag/v12_build10) or newer (new sdl2 version)
+- Vulkan 1.0 can run but it's too buggy, use OpenGL(ES) instead (adreno only, other SoC didn't support openGLES in this emu for now, because most mobile devices other than snapdragon doesn't support Vertex Shader SSBO) 
 
 # Vita3K
 
@@ -82,9 +81,6 @@ Please see [`building.md`](./building.md).
 Look through the app list and click on the app you would like to run and click the start button.
 
 For more detailed instructions on running/installing apps on Vita3K, please read the **#info-faq** channel on our [Discord Server](https://discord.gg/MaWhJVH).
-
-## Bugs and issues
-The project is in an early stage, so please be mindful when opening new issues. Expect crashes, glitches, low compatibility and poor performance.
 
 ## Thanks
 Thanks go out to the developer team and [everyone who has contributed](https://github.com/Vita3K/Vita3K/graphs/contributors).
