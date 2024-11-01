@@ -303,13 +303,29 @@ static vk::Format bcn_to_rgba8(const vk::Format format) {
     
     // BC1
     case vk::Format::eBc1RgbUnormBlock:
-        return vk::Format::eR8G8B8Unorm;
+        {
+            LOG_WARN("eBc1RgbUnormBlock");
+        return vk::Format::eEtc2R8G8B8UnormBlock;
+     //   return vk::Format::eR8G8B8Unorm;
+        }
     case vk::Format::eBc1RgbSrgbBlock:
-        return vk::Format::eR8G8B8Srgb;
+        {
+        LOG_WARN("eBc1RgbSrgbBlock");
+        return vk::Format::eEtc2R8G8B8SrgbBlock;
+     //   return vk::Format::eR8G8B8Srgb;
+        }
     case vk::Format::eBc1RgbaUnormBlock:
-        return vk::Format::eR8G8B8A8Unorm;
+        {
+            LOG_WARN("eBc1RgbaUnormBlock");
+            return vk::Format::eEtc2R8G8B8A1UnormBlock;
+      //  return vk::Format::eR8G8B8A8Unorm;
+        }
     case vk::Format::eBc1RgbaSrgbBlock:
-        return vk::Format::eR8G8B8A8Srgb;
+        {
+            LOG_WARN("eBc1RgbaSrgbBlock");
+            return vk::Format::eEtc2R8G8B8A1SrgbBlock;
+       // return vk::Format::eR8G8B8A8Srgb;
+        }
   
     // BC2
     case vk::Format::eBc2UnormBlock:
@@ -319,10 +335,17 @@ static vk::Format bcn_to_rgba8(const vk::Format format) {
 
     // BC3
     case vk::Format::eBc3UnormBlock:
-        return vk::Format::eR8G8B8A8Unorm;
+        {
+            LOG_WARN("eBc3UnormBlock");
+        return vk::Format::eEtc2R8G8B8A8UnormBlock;
+            // return vk::Format::eR8G8B8A8Unorm;
+        }
     case vk::Format::eBc3SrgbBlock:
-        return vk::Format::eR8G8B8A8Srgb;
-
+        {
+            LOG_WARN("eBc3SrgbBlock");
+        return vk::Format::eEtc2R8G8B8A8SrgbBlock;
+     //   return vk::Format::eR8G8B8A8Srgb;
+        }
     // BC4
     case vk::Format::eBc4UnormBlock:
         return vk::Format::eR8Unorm;
