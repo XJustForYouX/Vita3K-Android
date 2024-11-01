@@ -303,29 +303,13 @@ static vk::Format bcn_to_rgba8(const vk::Format format) {
     
     // BC1
     case vk::Format::eBc1RgbUnormBlock:
-        {
-            LOG_WARN("eBc1RgbUnormBlock");
-        return vk::Format::eEtc2R8G8B8UnormBlock;
-     //   return vk::Format::eR8G8B8Unorm;
-        }
+        return vk::Format::eR8G8B8Unorm;
     case vk::Format::eBc1RgbSrgbBlock:
-        {
-        LOG_WARN("eBc1RgbSrgbBlock");
-        return vk::Format::eEtc2R8G8B8SrgbBlock;
-     //   return vk::Format::eR8G8B8Srgb;
-        }
+        return vk::Format::eR8G8B8Srgb;
     case vk::Format::eBc1RgbaUnormBlock:
-        {
-            LOG_WARN("eBc1RgbaUnormBlock");
-            return vk::Format::eEtc2R8G8B8A1UnormBlock;
-      //  return vk::Format::eR8G8B8A8Unorm;
-        }
+        return vk::Format::eR8G8B8A8Unorm;
     case vk::Format::eBc1RgbaSrgbBlock:
-        {
-            LOG_WARN("eBc1RgbaSrgbBlock");
-            return vk::Format::eEtc2R8G8B8A1SrgbBlock;
-       // return vk::Format::eR8G8B8A8Srgb;
-        }
+        return vk::Format::eR8G8B8A8Srgb;
   
     // BC2
     case vk::Format::eBc2UnormBlock:
@@ -335,17 +319,10 @@ static vk::Format bcn_to_rgba8(const vk::Format format) {
 
     // BC3
     case vk::Format::eBc3UnormBlock:
-        {
-            LOG_WARN("eBc3UnormBlock");
-        return vk::Format::eEtc2R8G8B8A8UnormBlock;
-            // return vk::Format::eR8G8B8A8Unorm;
-        }
+        return vk::Format::eR8G8B8A8Unorm;
     case vk::Format::eBc3SrgbBlock:
-        {
-            LOG_WARN("eBc3SrgbBlock");
-        return vk::Format::eEtc2R8G8B8A8SrgbBlock;
-     //   return vk::Format::eR8G8B8A8Srgb;
-        }
+        return vk::Format::eR8G8B8A8Srgb;
+
     // BC4
     case vk::Format::eBc4UnormBlock:
         return vk::Format::eR8Unorm;
@@ -411,7 +388,7 @@ void VKTextureCache::configure_texture(const SceGxmTexture &gxm_texture) {
     if (gxm::is_bcn_format(base_format) && !support_dxt)
         // texture will be decompressed
         vk_format = bcn_to_rgba8(vk_format);
-    if (gxm_texture.gamma_mode)
+    if (gxm_texture.gamma_mode && support_dxt)
         vk_format = linear_to_srgb(vk_format);
 
     current_texture->mip_count = mip_count;
