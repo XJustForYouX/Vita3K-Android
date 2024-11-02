@@ -297,26 +297,6 @@ static vk::Format linear_to_srgb(const vk::Format format) {
     }
 }
 
-static vk::Format linear_rgb_to_srgb(const vk::Format format) {
-    switch (format) {
-    case vk::Format::eR8Unorm:
-        return vk::Format::eR8Srgb;
-    case vk::Format::eR8G8Unorm:
-        return vk::Format::eR8G8Srgb;
-        
-    case vk::Format::eR8G8B8A8Unorm:
-    case vk::Format::eBc1RgbaUnormBlock:
-    case vk::Format::eBc2UnormBlock:
-    case vk::Format::eBc3UnormBlock:
-        return vk::Format::eR8G8B8A8Srgb;
-        
-    default: {
-        LOG_ERROR("RGB : Trying to use gamma correction with non-compatible format {}", vk::to_string(format));
-        return format;
-    }
-    }
-}
-
 static vk::Format bcn_to_rgba8(const vk::Format format) {
     switch (format) {
     // https://www.reedbeta.com/blog/understanding-bcn-texture-compression-formats/
@@ -405,16 +385,13 @@ void VKTextureCache::configure_texture(const SceGxmTexture &gxm_texture) {
     const uint16_t mip_count = renderer::texture::get_upload_mip(gxm_texture.true_mip_count(), width, height);
 
     vk::Format vk_format = texture::translate_format(base_format);
-    if (!support_dxt){ // mali or other
-        if (gxm::is_bcn_format(base_format))
-           // texture will be decompressed
-           vk_format = bcn_to_rgba8(vk_format);
-        if (gxm_texture.gamma_mode)
-           vk_format = linear_rgb_to_srgb(vk_format);
-    } else { // adreno
-        if (gxm_texture.gamma_mode)
-            vk_format = linear_to_srgb(vk_format);
-    }
+    // we need gamma correction first then decompress if not supported
+    if (gxm_texture.gamma_mode) 
+        vk_format = linear_to_srgb(vk_format);
+        
+    if (gxm::is_bcn_format(base_format) && !support_dxt)
+        // texture will be decompressed
+        vk_format = bcn_to_rgba8(vk_format);
     
     current_texture->mip_count = mip_count;
     current_texture->is_cube = is_cube;
