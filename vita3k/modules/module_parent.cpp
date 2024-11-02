@@ -18,6 +18,7 @@
 #include "io/functions.h"
 #include "io/io.h"
 
+#include <boost/filesystem/operations.hpp>
 #include <modules/module_parent.h>
 
 #include <cpu/functions.h>
@@ -97,6 +98,27 @@ Address resolve_export(KernelState &kernel, uint32_t nid) {
     return export_address->second;
 }
 
+Ptr<void> create_vtable(const std::vector<uint32_t> &nids, MemState &mem) {
+    // we need 4 bytes for the function pointer and 12 bytes for the syscall
+    const uint32_t vtable_size = nids.size() * 4 * sizeof(uint32_t);
+    Ptr<void> vtable = Ptr<void>(alloc(mem, vtable_size, "vtable"));
+    uint32_t *function_pointer = vtable.cast<uint32_t>().get(mem);
+    uint32_t *function_svc = function_pointer + nids.size();
+    uint32_t function_location = vtable.address() + nids.size() * sizeof(uint32_t);
+    for (uint32_t nid : nids) {
+        *function_pointer = function_location;
+        // encode svc call
+        function_svc[0] = 0xef000000; // svc #0 - Call our interrupt hook.
+        function_svc[1] = 0xe1a0f00e; // mov pc, lr - Return to the caller.
+        function_svc[2] = nid; // Our interrupt hook will read this.
+
+        function_pointer++;
+        function_svc += 3;
+        function_location += 3 * sizeof(uint32_t);
+    }
+    return vtable;
+}
+
 static void log_import_call(char emulation_level, uint32_t nid, SceUID thread_id, const std::unordered_set<uint32_t> &nid_blacklist, Address lr) {
     if (!nid_blacklist.contains(nid)) {
         const char *const name = import_name(nid);
@@ -128,6 +150,7 @@ void call_import(EmuEnvState &emuenv, CPUState &cpu, uint32_t nid, SceUID thread
 
             if (!emuenv.missing_nids.contains(nid) || LOG_UNK_NIDS_ALWAYS) {
                 LOG_ERROR("Import function for NID {} not found (thread name: {}, thread ID: {})", log_hex(nid), thread->name, thread_id);
+                LOG_DEBUG("{}\n{}", save_context(*thread->cpu).description(), thread->log_stack_traceback());
 
                 if (!LOG_UNK_NIDS_ALWAYS)
                     emuenv.missing_nids.insert(nid);
@@ -186,7 +209,31 @@ SceUID load_module(EmuEnvState &emuenv, const std::string &module_path) {
     vfs::FileBuffer module_buffer;
     bool res;
     VitaIoDevice device = device::get_device(module_path);
-    auto translated_module_path = translate_path(module_path.c_str(), device, emuenv.io.device_paths);
+    auto device_for_icase = device;
+    fs::path translated_module_path = translate_path(module_path.c_str(), device, emuenv.io.device_paths);
+    auto system_path = device::construct_emulated_path(device, translated_module_path, emuenv.pref_path, emuenv.io.redirect_stdio);
+
+    if (emuenv.io.case_isens_find_enabled && !fs::exists(system_path)) {
+        // Attempt a case-insensitive file search.
+        const auto original_translated_module_path = translated_module_path;
+        const auto cached_path = find_in_cache(emuenv.io, string_utils::tolower(translated_module_path.string()));
+        if (!cached_path.empty()) {
+            translated_module_path = cached_path;
+            LOG_TRACE("Found cached filepath at {}", translated_module_path);
+        } else {
+            const bool path_found = find_case_isens_path(emuenv.io, device_for_icase, translated_module_path, system_path);
+            translated_module_path = find_in_cache(emuenv.io, string_utils::tolower(system_path.string()));
+            if (!translated_module_path.empty() && path_found) {
+                LOG_TRACE("Found file on case-sensitive filesystem at {}", translated_module_path);
+                translated_module_path = translated_module_path.string().substr(emuenv.pref_path.string().length());
+                translated_module_path = translated_module_path.string().substr(translated_module_path.string().find('/') + 1);
+            } else {
+                LOG_ERROR("Missing file at {} (target path: {})", original_translated_module_path.string(), module_path);
+                return SCE_ERROR_ERRNO_ENOENT;
+            }
+        }
+    }
+
     if (device == VitaIoDevice::app0)
         res = vfs::read_app_file(module_buffer, emuenv.pref_path, emuenv.io.app_path, translated_module_path);
     else
