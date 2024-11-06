@@ -106,7 +106,7 @@ void draw_initial_setup(GuiState &gui, EmuEnvState &emuenv) {
     ImGui::SetCursorPosY(94.f * SCALE.y);
     ImGui::Separator();
 #ifdef ANDROID
-        constexpr char* path_warning = "Using a different path requires additional permissions";
+        constexpr char* path_warning = strdup("Using a different path requires additional permissions");
 #endif
     switch (setup) {
     case SELECT_LANGUAGE:
