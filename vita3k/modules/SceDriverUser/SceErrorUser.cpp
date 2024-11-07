@@ -17,8 +17,13 @@
 
 #include <module/module.h>
 
-EXPORT(int, sceErrorGetExternalString) {
-    return UNIMPLEMENTED();
+#include <util/tracy.h>
+TRACY_MODULE_NAME(SceErrorUser);
+
+EXPORT(SceInt32, sceErrorGetExternalString, char *result, int err) {
+    TRACY_FUNC(sceErrorGetExternalString, result, err);
+    sprintf(result, "0x%08X", err);
+    return 0;
 }
 
 EXPORT(int, sceErrorHistoryClearError) {
