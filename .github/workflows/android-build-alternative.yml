@@ -53,7 +53,7 @@ jobs:
       run: |
         cd ${{ github.workspace }}/Vita3K-Android
         chmod +x ./gradlew
-        ./gradlew "assembleRelease"
+        ./gradlew --stacktrace --info --configuration-cache --build-cache --parallel --configure-on-demand "assembleRelease"
         # bash gradlew build
         mv $(find android/build/outputs/apk -type f | grep -E "\.apk$") ${{ github.workspace }}/vita3k-android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}.apk
 
