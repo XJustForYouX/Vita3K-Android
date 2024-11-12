@@ -1,72 +1,70 @@
-name: vita3k-android-build-alternative
+name: Android build Alternative
 
+# this is greatly inspired by skyline ci build file
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'select branch to build(default: v12.6_prev)'
-        required: false
-        default: 'v12.6_prev'
+  workflows_dispatch:
 
 jobs:
-  vita3k-android_build:
-    permissions:
-      contents: write
+  build:
     runs-on: ubuntu-latest
+    env:
+      JVM_OPTS: -Xmx6G
+      VCPKG_ROOT: /usr/local/share/vcpkg
+
     steps:
-    - uses: actions/setup-java@v4
-      with:
-        distribution: temurin
-        java-version: 18
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+ 
+      - uses: hendrikmuhs/ccache-action@v1.2
 
-    - name: Download Vita3K-Android source code
-      run: |
-        cd ${{ github.workspace }}
-        git clone --branch ${{ github.event.inputs.branch || 'v12.6_prev' }} https://github.com/XJustForYouX/Vita3K-Android.git --recursive
-        cd Vita3K-Android
+      - name: Restore Gradle Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/
+            ${{ env.VCPKG_ROOT }}/installed
+            ${{ env.VCPKG_ROOT }}/packages
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/build.gradle') }}-${{ hashFiles('android/**/*.xml') }}-${{ hashFiles('android/**.java') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-${{ hashFiles('**/build.gradle') }}-${{ hashFiles('android/**/*.xml') }}-
+            ${{ runner.os }}-gradle-${{ hashFiles('**/build.gradle') }}-
+            ${{ runner.os }}-gradle-
+
+      - name: Set up build environment
+        run: |
+          sudo apt-get install -y ninja-build
+          vcpkg install boost-system:arm64-android boost-filesystem:arm64-android boost-program-options:arm64-android boost-icl:arm64-android boost-variant:arm64-android openssl:arm64-android zlib:arm64-android
+
+      - name: Decode Keystore
+        env:
+          KEYSTORE_ENCODED: ${{ secrets.KEYSTORE }}
+        run: echo $KEYSTORE_ENCODED | base64 --decode > "/home/runner/keystore.jks"
+
+      - name: Gradle build
+        env:
+          SIGNING_STORE_PATH: "/home/runner/keystore.jks"
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          mkdir android/assets/data
+          cp -r data/image android/assets/data/image
+          cp -r lang android/assets
+          cp -r vita3k/shaders-builtin android/assets
+          export JAVA_HOME=$(echo $JAVA_HOME_17_X64)
+          ./gradlew --stacktrace --info --configuration-cache --build-cache --parallel --configure-on-demand assembleRelease
+
+      - name: Compute git short sha
+        shell: bash
+        run: echo "git_short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
         
-
-    - id: version
-      name: Get version
-      run: |
-        echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
-        cd ${{ github.workspace }}/Vita3K-Android
-        echo "hash=$(git log -1 --pretty=format:%H)" >> $GITHUB_OUTPUT
-        echo "short_hash=$(git describe --always --long)" >> $GITHUB_OUTPUT
-        echo "version=$(git describe --tags --always)" >> $GITHUB_OUTPUT
-
-    - name: Set up cache
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-vita3k-android-${{ steps.version.outputs.hash }}
-        restore-keys: |
-            ${{ runner.os }}-vita3k-android-
-
-    - name: Prepare environment
-      run: |
-        sudo apt-get install -y ninja-build
-        vcpkg install boost-system:arm64-android boost-filesystem:arm64-android boost-program-options:arm64-android boost-icl:arm64-android boost-variant:arm64-android openssl:arm64-android zlib:arm64-android
-
-    - name: Build Android
-      run: |
-        cd ${{ github.workspace }}/Vita3K-Android
-        chmod +x ./gradlew
-        ./gradlew --stacktrace --info --configuration-cache --build-cache --parallel --configure-on-demand "assembleRelease"
-        # bash gradlew build
-        mv $(find android/build/outputs/apk -type f | grep -E "\.apk$") ${{ github.workspace }}/vita3k-android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}.apk
-
-    - name: Release vita3k-android (Vita3K-Android)
-      uses: softprops/action-gh-release@v2
-      with:
-        name: vita3k-android ${{ steps.version.outputs.date }}
-        tag_name: vita3k-android
-        files: ${{ github.workspace }}/vita3k-android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}.apk
-
-    - name: Release vita3k-android ${{ steps.version.outputs.date }}
-      uses: softprops/action-gh-release@v2
-      with:
-        name: ${{ steps.version.outputs.date }}
-        tag_name: ${{ steps.version.outputs.date }}
-        files: ${{ github.workspace }}/vita3k-android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}.apk
+      - name: Rename APK
+        run: |
+          mv  android/build/outputs/apk/release/android-release.apk  android/build/outputs/apk/release/vita3k-${{ env.git_short_sha }}-release.apk
+          
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vita3k-${{ env.git_short_sha }}-release.zip
+          path: android/build/outputs/apk/release/vita3k-${{ env.git_short_sha }}-release.apk
