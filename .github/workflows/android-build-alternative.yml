@@ -1,0 +1,72 @@
+name: vita3k-android-build-alternative
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'select branch to build(default: v12.6_prev)'
+        required: false
+        default: 'v12.6_prev'
+
+jobs:
+  vita3k-android_build:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 18
+
+    - name: Download Vita3K-Android source code
+      run: |
+        cd ${{ github.workspace }}
+        git clone --branch ${{ github.event.inputs.branch || 'v12.6_prev' }} https://github.com/XJustForYouX/Vita3K-Android.git --recursive
+        cd Vita3K-Android
+        
+
+    - id: version
+      name: Get version
+      run: |
+        echo "date=$(/bin/date -u "+%Y%m%d")" >> $GITHUB_OUTPUT
+        cd ${{ github.workspace }}/Vita3K-Android
+        echo "hash=$(git log -1 --pretty=format:%H)" >> $GITHUB_OUTPUT
+        echo "short_hash=$(git describe --always --long)" >> $GITHUB_OUTPUT
+        echo "version=$(git describe --tags --always)" >> $GITHUB_OUTPUT
+
+    - name: Set up cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-vita3k-android-${{ steps.version.outputs.hash }}
+        restore-keys: |
+            ${{ runner.os }}-vita3k-android-
+
+    - name: Prepare environment
+      run: |
+        sudo apt-get install -y ninja-build
+        vcpkg install boost-system:arm64-android boost-filesystem:arm64-android boost-program-options:arm64-android boost-icl:arm64-android boost-variant:arm64-android openssl:arm64-android zlib:arm64-android
+
+    - name: Build Android
+      run: |
+        cd ${{ github.workspace }}/Vita3K-Android
+        chmod +x ./gradlew
+        ./gradlew "assembleRelease"
+        # bash gradlew build
+        mv $(find android/build/outputs/apk -type f | grep -E "\.apk$") ${{ github.workspace }}/vita3k-android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}.apk
+
+    - name: Release vita3k-android (Vita3K-Android)
+      uses: softprops/action-gh-release@v2
+      with:
+        name: vita3k-android ${{ steps.version.outputs.date }}
+        tag_name: vita3k-android
+        files: ${{ github.workspace }}/vita3k-android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}.apk
+
+    - name: Release PCSX2 ${{ steps.version.outputs.date }}
+      uses: softprops/action-gh-release@v2
+      with:
+        name: ${{ steps.version.outputs.date }}
+        tag_name: ${{ steps.version.outputs.date }}
+        files: ${{ github.workspace }}/vita3k-android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}.apk
