@@ -1,8 +1,12 @@
 name: Android build Alternative
 
-# this is greatly inspired by skyline ci build file
 on:
-  workflows_dispatch:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'select branch to build(default: v12.6_prev)'
+        required: false
+        default: 'v12.6_prev'
 
 jobs:
   build:
