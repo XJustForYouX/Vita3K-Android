@@ -64,7 +64,7 @@ jobs:
         tag_name: vita3k-android
         files: ${{ github.workspace }}/vita3k-android-${{ steps.version.outputs.date }}-${{ steps.version.outputs.version }}.apk
 
-    - name: Release PCSX2 ${{ steps.version.outputs.date }}
+    - name: Release vita3k-android ${{ steps.version.outputs.date }}
       uses: softprops/action-gh-release@v2
       with:
         name: ${{ steps.version.outputs.date }}
